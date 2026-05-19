@@ -1,6 +1,6 @@
 # Hollow infilling and recurrence-interval workflow
 
-This repository contains a two-stage workflow for modeling hollow soil-depth evolution and estimating hollow failure recurrence intervals. The workflow was designed for characteristic hollow DEM snippets from the Oregon Coast Range, where smaller DEM subsets (`extX`) were clipped around representative convergent hollows to reduce computational cost while preserving local hillslope and hollow geometry.
+This repository contains a two-stage workflow for modeling hollow soil depth evolution and estimating hollow failure recurrence intervals. The workflow was designed for characteristic hollow DEM snippets from the Oregon Coast Range, where smaller DEM subsets (`extX`) were clipped around representative convergent hollows to reduce computational cost while preserving local hillslope and hollow geometry.
 
 ## Files
 
@@ -11,14 +11,14 @@ This repository contains a two-stage workflow for modeling hollow soil-depth evo
   Runs the soil transport/soil production model, writes time-stepped GeoTIFFs, and reprojects raster and shapefile outputs.
 
 - `02_extract_and_calculate_RI.py`  
-  Reads the reprojected soil-depth rasters, extracts soil depth by hollow and candidate buffer size, calculates factor of safety (FS), interpolates the first FS = 1 crossing, and saves optimal-buffer recurrence-interval outputs.
+  Reads the reprojected soil-depth rasters, extracts soil depth by hollow and candidate buffer size, calculates factor of safety (FS), interpolates the first FS = 1 crossing, and saves optima buffer recurrence-interval outputs.
 
 - `environment.yml`  
   Defines the conda environment needed to run the workflow.
 
 ## DEM preparation and hollow selection
 
-The workflow is intended for clipped DEM subsets that contain characteristic hollows and adjacent hillslopes. Each DEM subset should be large enough to preserve the local topographic setting around the hollow, but small enough to keep the Landlab soil-transport simulation computationally efficient.
+The workflow is intended for clipped DEM subsets that contain characteristic hollows and adjacent hillslopes. Each DEM subset should be large enough to preserve the local topographic setting around the hollow, but small enough to keep the Landlab soil transport simulation computationally efficient.
 
 Each model extent requires:
 
@@ -105,7 +105,7 @@ python 01_run_soil_transport.py
 
 In Spyder, open `01_run_soil_transport.py` and press the green Run button or press `F5`.
 
-This is the expensive stage. It generates time-stepped soil-depth rasters and reprojects them for the RI analysis.
+This is the expensive stage. It generates time-stepped soil depth rasters and reprojects them for the RI analysis.
 
 ## 3. Run extraction and RI analysis
 
@@ -162,7 +162,7 @@ The recurrence-interval outputs are saved in `results_dir`, which is set in `con
 
 ## Publication logic
 
-The split between scripts makes the workflow clearer and more reproducible. The soil-depth evolution model only needs to be rerun when the DEM, hollow initialization, or transport/production parameters change. The FS and RI analysis can be rerun independently for different cohesion or saturation scenarios.
+The split between scripts makes the workflow clearer and more reproducible. The soil depth evolution model only needs to be rerun when the DEM, hollow initialization, or transport/production parameters change. The FS and RI analysis can be rerun independently for different cohesion or saturation scenarios.
 
 ### 5. Generate manuscript figures and post-processing outputs
 
