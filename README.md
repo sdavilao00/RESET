@@ -13,5 +13,10 @@ This repository contains a two-stage workflow for modeling hollow soil depth evo
 - `02_extract_and_calculate_RI.py`  
   Reads the reprojected soil-depth rasters, extracts soil depth by hollow and candidate buffer size, calculates factor of safety (FS), interpolates the first FS = 1 crossing, and saves optima buffer recurrence-interval outputs.
 
+- `03_plot_ri.py`  
+  Plots recurrence interval data and determines best-fit.
+
 - `environment.yml`  
   Defines the conda environment needed to run the workflow.
+
+  Information regarding other figure deliverables can be found in the wiki page of this repository.
