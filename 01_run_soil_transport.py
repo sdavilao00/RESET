@@ -255,8 +255,15 @@ def run_soil_transport_simulation(cfg):
     print("Soil transport simulation complete.")
 
 
-def reproject_all_tifs(input_folder, output_folder, target_crs="EPSG:32610", suffix="_32610"):
+def reproject_all_tifs(
+    input_folder,
+    output_folder,
+    target_crs="EPSG:32610",
+    suffix="_32610",
+    overwrite=False,
+):
     """Reproject all GeoTIFFs in a folder to the target CRS."""
+
     input_folder = Path(input_folder)
     output_folder = Path(output_folder)
     output_folder.mkdir(parents=True, exist_ok=True)
@@ -265,46 +272,90 @@ def reproject_all_tifs(input_folder, output_folder, target_crs="EPSG:32610", suf
 
     for tif_path in tif_files:
         tif_path = Path(tif_path)
-        with rasterio.open(tif_path) as src:
-            transform, width, height = calculate_default_transform(
-                src.crs, target_crs, src.width, src.height, *src.bounds
-            )
 
-            kwargs = src.meta.copy()
-            kwargs.update({"crs": target_crs, "transform": transform, "width": width, "height": height})
+        out_name = tif_path.stem + f"{suffix}.tif"
+        out_path = output_folder / out_name
 
-            out_name = tif_path.stem + f"{suffix}.tif"
-            out_path = output_folder / out_name
+        # Skip existing files unless overwrite=True
+        if out_path.exists() and not overwrite:
+            print(f"Skipping existing TIFF: {out_path.name}")
+            continue
 
-            with rasterio.open(out_path, "w", **kwargs) as dst:
-                for band in range(1, src.count + 1):
-                    reproject(
-                        source=rasterio.band(src, band),
-                        destination=rasterio.band(dst, band),
-                        src_transform=src.transform,
-                        src_crs=src.crs,
-                        dst_transform=transform,
-                        dst_crs=target_crs,
-                        resampling=Resampling.nearest,
-                    )
+        try:
+            with rasterio.open(tif_path) as src:
+                transform, width, height = calculate_default_transform(
+                    src.crs,
+                    target_crs,
+                    src.width,
+                    src.height,
+                    *src.bounds,
+                )
 
-        print(f"Reprojected TIFF: {out_name}")
+                kwargs = src.meta.copy()
+                kwargs.update({
+                    "crs": target_crs,
+                    "transform": transform,
+                    "width": width,
+                    "height": height,
+                })
+
+                with rasterio.open(out_path, "w", **kwargs) as dst:
+                    for band in range(1, src.count + 1):
+                        reproject(
+                            source=rasterio.band(src, band),
+                            destination=rasterio.band(dst, band),
+                            src_transform=src.transform,
+                            src_crs=src.crs,
+                            dst_transform=transform,
+                            dst_crs=target_crs,
+                            resampling=Resampling.nearest,
+                        )
+
+            print(f"Reprojected TIFF: {tif_path.name} -> {out_path.name}")
+
+        except Exception as exc:
+            print(f"Failed to reproject {tif_path.name}: {exc}")
 
 
-def reproject_shapefiles_safe(input_folder, output_folder, target_crs="EPSG:32610", assumed_source_epsg=6557):
+def reproject_shapefiles_safe(
+    input_folder,
+    output_folder,
+    target_crs="EPSG:32610",
+    assumed_source_epsg=6557,
+    overwrite=False,
+):
     """Reproject all shapefiles without overwriting existing CRS metadata."""
+
     input_folder = Path(input_folder)
     output_folder = Path(output_folder)
     output_folder.mkdir(parents=True, exist_ok=True)
 
     for shp_path in glob.glob(str(input_folder / "*.shp")):
         shp_path = Path(shp_path)
+
+        out_path = output_folder / f"{shp_path.stem}_32610.shp"
+
+        # Skip if already exists
+        if out_path.exists() and not overwrite:
+            print(f"Skipping existing shapefile: {out_path.name}")
+            continue
+
         try:
             gdf = gpd.read_file(shp_path)
-            gdf = safe_reproject_gdf(gdf, target_crs, assumed_source_epsg)
-            out_path = output_folder / f"{shp_path.stem}_32610.shp"
+
+            gdf = safe_reproject_gdf(
+                gdf,
+                target_crs,
+                assumed_source_epsg
+            )
+
             gdf.to_file(out_path)
-            print(f"Reprojected shapefile: {shp_path.name} -> {out_path.name}")
+
+            print(
+                f"Reprojected shapefile: "
+                f"{shp_path.name} -> {out_path.name}"
+            )
+
         except Exception as exc:
             print(f"Failed to reproject {shp_path.name}: {exc}")
 

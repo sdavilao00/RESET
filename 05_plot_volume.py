@@ -32,13 +32,22 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[38, 40, 44])
+    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[55, 57, 65])
+    
+    target_m = 1.0
+    ri_df = ri_df[ri_df["m"] == target_m].copy()
+
+    ri_df = add_critical_area_and_volume(
+        ri_df,
+        cfg,
+        saturation=target_m,
+    )
     plot_df = add_critical_area_and_volume(ri_df, cfg, saturation=1.0)
     plot_df = plot_df.dropna(subset=["Avg_Slope_deg", "Year", "Volume", "Cohesion"])
     plot_df = plot_df[(plot_df["Year"] > 0) & (plot_df["Volume"] > 0)]
 
     fig, ax = plt.subplots(figsize=(9, 6))
-    ax.set_facecolor("#f0f0f0")
+    # ax.set_facecolor("#f0f0f0")
     ax.set_axisbelow(True)
     ax.minorticks_on()
 
@@ -71,7 +80,7 @@ def main():
     ax.set_xticks(xticks)
 
     ax.set_yscale("log")
-    ax.set_ylim(100, 1e4)
+    ax.set_ylim(50, 1e4)
     ax.set_yticks([100, 1000, 10000])
     ax.yaxis.set_major_formatter(LogFormatterMathtext())
 
@@ -103,6 +112,33 @@ def main():
     ]
 
     spacer = Line2D([], [], linestyle="None", label="")
+    
+    # build volume handles manually so we can control spacing
+    vol_unique = np.sort(plot_df["Volume"].unique())
+    v_min = vol_unique[0]
+    v_mid = vol_unique[len(vol_unique)//2]
+    v_max = vol_unique[-1]
+    volume_handles = [
+        Line2D([], [], marker="o", linestyle="None",
+               color="gray", markeredgecolor="k",
+               markersize=np.sqrt(v_min * size_scale),
+               label=f"{int(round(v_min)):,}"),
+        
+        #spacer,
+    
+        Line2D([], [], marker="o", linestyle="None",
+               color="gray", markeredgecolor="k",
+               markersize=np.sqrt(v_mid * size_scale)*0.8,
+               label=f"{int(round(v_mid)):,}"),
+    
+        spacer,
+    
+        Line2D([], [], marker="o", linestyle="None",
+               color="gray", markeredgecolor="k",
+               markersize=np.sqrt(v_max * size_scale)*0.8,
+               label=f"{int(round(v_max)):,}")
+    ]
+
     coh_header = Line2D([], [], linestyle="None", label="Cohesion (Pa)")
     vol_header = Line2D([], [], linestyle="None", label=r"Volume (m$^3$)")
 

@@ -31,10 +31,10 @@ from plot_helpers import (
 TARGET_COHESION = 1920
 SATURATION_FOR_VOLUME = 1.0
 MIN_SLOPE_DEG = 25.0
-DROP_INDICES = [38, 40, 44]
+# DROP_INDICES = [38, 40, 44]
 
 ZONAL_9_CSV = "zonal_9.csv"
-ZONAL_15_CSV = "zonal_15.csv"
+
 
 SAVE_FIGURE = True
 SAVE_EROSION_TABLE = True
@@ -79,28 +79,30 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=MIN_SLOPE_DEG, drop_indices=DROP_INDICES)
+    ri_df = clean_ri_dataframe(ri_df, min_slope=MIN_SLOPE_DEG)
 
     ri_df = ri_df[ri_df["Cohesion"] == TARGET_COHESION].copy()
+    ri_df = ri_df[ri_df["m"] == 1.0].copy()
+    
     if ri_df.empty:
         raise ValueError(f"No RI results found for Cohesion = {TARGET_COHESION} Pa")
 
     ri_df = add_critical_area_and_volume(ri_df, cfg, saturation=SATURATION_FOR_VOLUME)
 
     zonal_9_path = cfg.base_dir / ZONAL_9_CSV
-    zonal_15_path = cfg.base_dir / ZONAL_15_CSV
+    
 
     zonal_9 = load_zonal_table(zonal_9_path, "max_9")
-    zonal_15 = load_zonal_table(zonal_15_path, "max_15")
+    
 
     merged_ero = (
         ri_df
         .merge(zonal_9, on=["Point_ID", "Extent"], how="inner")
-        .merge(zonal_15, on=["Point_ID", "Extent"], how="inner")
+        
     )
 
     merged_ero["Erosion_9"] = (merged_ero["Volume"] / (merged_ero["Year"] * merged_ero["max_9"])) * 1000.0
-    merged_ero["Erosion_15"] = (merged_ero["Volume"] / (merged_ero["Year"] * merged_ero["max_15"])) * 1000.0
+    
 
     # Remove anomalously low erosion-rate point near 42.7 degrees if present.
     plot_ero = merged_ero[
@@ -113,6 +115,7 @@ def main():
 
     plot_ero = plot_ero.dropna(subset=["Avg_Slope_deg", "Erosion_9"])
     plot_ero = plot_ero[plot_ero["Erosion_9"] > 0]
+    plot_ero = plot_ero.drop(index=[15, 23])
 
     if SAVE_EROSION_TABLE:
         out_csv = cfg.results_dir / f"erosion_results_C{TARGET_COHESION}.csv"
@@ -129,7 +132,7 @@ def main():
 
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.set_facecolor("#f0f0f0")
-    ax.set_ylim(1e-2, 5e-1)
+    ax.set_ylim(1e-2, 6e-1)
 
     ax.scatter(
         x,
@@ -185,7 +188,8 @@ def main():
         fig.savefig(fig_dir / "erosion_slope_final.png", dpi=450, bbox_inches="tight")
 
     plt.show()
+    return plot_ero
 
 
 if __name__ == "__main__":
-    main()
+    plot_ero = main()
