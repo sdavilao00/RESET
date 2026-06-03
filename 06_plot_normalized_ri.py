@@ -30,7 +30,7 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[38, 40, 44])
+    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[55, 57, 65])
     ri_df["RI_norm"] = ri_df["Year"] / ri_df["Cohesion"]
 
     x = ri_df["Avg_Slope_deg"].to_numpy()
@@ -57,7 +57,7 @@ def main():
     y_fit = a_fit / (x_fit + b_fit)
 
     fig, ax = plt.subplots(figsize=(9, 6))
-    ax.set_facecolor("#f0f0f0")
+    # ax.set_facecolor("#f0f0f0")
     ax.minorticks_off()
     ax.set_axisbelow(True)
     ax.grid(True, which="major", axis="both", color="#bdbdbd", linewidth=0.8, alpha=0.5)
@@ -75,6 +75,13 @@ def main():
 
     ax.set_xlabel(r"Hollow slope, $\theta_H$ (°)", fontweight="bold")
     ax.set_ylabel("RI / Cohesion", fontweight="bold")
+    
+    # Y-axis ticks every 0.2
+    yticks = np.arange(0, 2, 0.2)
+    ax.set_yticks(yticks)
+
+    # Force one decimal place formatting
+    ax.set_yticklabels([f"{tick:.1f}" for tick in yticks])
 
     xticks = np.arange(
         np.floor(ri_df["Avg_Slope_deg"].min() / 3) * 3,

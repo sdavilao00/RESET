@@ -104,14 +104,14 @@ def add_critical_area_and_volume(df, cfg, saturation=1.0):
     A = (
         2 * Crl * z
         + K0 * (z ** 2) * (ys - yw * saturation ** 2) * np.tan(phi)
-    ) * np.cos(hollow_rad) * (cfg.l / cfg.w) ** 0.5
+    ) * np.cos(hollow_rad) * (cfg.r) ** 0.5
 
     B = (
         (Kp - Ka)
         * 0.5
         * (z ** 2)
         * (ys - yw * saturation ** 2)
-        * (cfg.l / cfg.w) ** (-0.5)
+        * (cfg.r) ** (-0.5)
     )
 
     C = (

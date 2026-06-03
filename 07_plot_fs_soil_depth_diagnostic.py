@@ -30,7 +30,7 @@ DIAGNOSTIC_SATURATION = 1.0
 
 # Optional times for the basal-area diagnostic plot. If None, only the failure
 # year is used. Change these to values that are meaningful for the selected hollow.
-TIMES_TO_PLOT = None  # Example: [1090, 1100]
+TIMES_TO_PLOT = [950, 1000]  # Example: [1090, 1100]
 
 SAVE_FIGURES = True
 
@@ -196,34 +196,100 @@ def main():
         print(pd.DataFrame([optimal]))
 
     # -------------------------------------------------------------------------
-    # Figure 1: FS and soil depth through time for the optimal/fallback buffer
+    # Figure 1: FS and soil depth through time by buffer size
     # -------------------------------------------------------------------------
-    plot_data = point_data[point_data["Buffer_Size"] == optimal_buffer].sort_values("Year")
-
-    fig, ax1 = plt.subplots(figsize=(7, 5))
-    ax1.set_facecolor("#f0f0f0")
-
-    ax1.plot(plot_data["Year"], plot_data["FS"], marker="o", lw=1.5, color="C0")
+    plot_df = point_data.sort_values(["Buffer_Size", "Year"]).copy()
+    
+    fig, ax1 = plt.subplots(figsize=(9, 6))
+    
+    buffer_sizes = sorted(plot_df["Buffer_Size"].unique())
+    cmap = plt.cm.viridis
+    buffer_colors = cmap(np.linspace(0, 1, len(buffer_sizes)))
+    
+    # Left axis: FS vs time
+    for color, buffer_size in zip(buffer_colors, buffer_sizes):
+        sub = plot_df[plot_df["Buffer_Size"] == buffer_size].sort_values("Year")
+    
+        lw = 2.0 if buffer_size == optimal_buffer else 1.5
+    
+        ax1.plot(
+            sub["Year"],
+            sub["FS"],
+            marker="o",
+            markersize=7,
+            lw=lw,
+            color=color,
+            label=f"Buffer {buffer_size} m – FS",
+        )
+    
     ax1.set_xlabel("Time (years)")
-    ax1.set_ylabel("Factor of safety (FS)", color="C0")
-    ax1.tick_params(axis="y", labelcolor="C0")
-
+    ax1.set_ylabel("Factor of Safety (FS)", color="black")
+    ax1.tick_params(axis="y", labelleft=False)
+    
+    # Zoom to region around failure
+    if optimal_year is not None:
+        ax1.set_xlim(0, min(optimal_year * 1.2, plot_df["Year"].max()))
+    else:
+        ax1.set_xlim(0, plot_df["Year"].max() * 1.05)
+    
+    # Override to fixed x-limit, like your version
+    ax1.set_xlim(0, 1200)
+    
+    ax1.grid(True, which="both", color="#d0d0d0", alpha=0.7)
+    ax1.set_axisbelow(True)
+    
+    # Right axis: soil depth vs time
     ax2 = ax1.twinx()
     ax2.set_facecolor("#f0f0f0")
-    ax2.plot(plot_data["Year"], plot_data["Avg_Soil_Depth"], marker="s", lw=1.5, color="C1")
-    ax2.set_ylabel("Average soil depth (m)", color="C1")
-    ax2.tick_params(axis="y", labelcolor="C1")
-    ax2.set_ylim(0, max(0.75, 1.05 * np.nanmax(plot_data["Avg_Soil_Depth"])))
-
+    
+    for color, buffer_size in zip(buffer_colors, buffer_sizes):
+        sub = plot_df[plot_df["Buffer_Size"] == buffer_size].sort_values("Year")
+    
+        lw = 2.0 if buffer_size == optimal_buffer else 1.4
+    
+        ax2.plot(
+            sub["Year"],
+            sub["Avg_Soil_Depth"],
+            marker="x",
+            markersize=7,
+            lw=lw,
+            linestyle="--",
+            color=color,
+            label=f"Buffer {buffer_size} m – Depth",
+        )
+        
+        # Horizontal FS = 1 reference line
+    ax1.axhline(
+        1.0,
+        linestyle="--",
+        linewidth=1.8,
+        color="red",
+        alpha=0.8,
+        zorder = 100,
+    )
+    
+    # Vertical failure-year line
     if optimal_year is not None:
-        ax1.set_xlim(0, min(optimal_year * 1.2, plot_data["Year"].max()))
-    else:
-        ax1.set_xlim(0, plot_data["Year"].max())
-
-    fig.tight_layout()
-    savefig(fig, fig_dir / f"{cfg.basename}_point{TARGET_POINT_ID}_fs_soildepth_time.png", SAVE_FIGURES)
+        ax1.axvline(
+            optimal_year,
+            linestyle="--",
+            linewidth=1.8,
+            color="red",
+            alpha=0.8,
+            zorder = 100,
+        )
+        
+        ax2.set_ylabel("Average Soil Depth (m)", color="black")
+        ax2.tick_params(axis="y", labelcolor="black")
+        ax2.set_ylim(0, 0.8)
+        
+        fig.tight_layout()
+        savefig(
+            fig,
+            fig_dir / f"{cfg.basename}_point{TARGET_POINT_ID}_fs_soildepth_by_buffer.png",
+            SAVE_FIGURES,
+        )
     plt.show()
-
     # -------------------------------------------------------------------------
     # Figure 2: FS by buffer size at the optimal failure year
     # -------------------------------------------------------------------------
@@ -291,7 +357,7 @@ def main():
         line_styles = ["--", ":", "-"][:len(selected_times)]
 
         fig, ax = plt.subplots(figsize=(9, 6))
-        ax.set_facecolor("#f0f0f0")
+        #ax.set_facecolor("#f0f0f0")
         ax.grid(True, which="both", color="#d0d0d0", alpha=0.7)
 
         buffer_colors = cm.viridis(np.linspace(0, 1, len(buffers)))
@@ -326,9 +392,19 @@ def main():
                 markeredgecolor="red", markeredgewidth=2.5, zorder=5,
                 label=f"Optimal area = {basal_areas[i_opt]:.0f} m$^2$",
             )
+            
+        # Horizontal FS = 1 reference line
+        ax.axhline(
+            1.0,
+            linestyle="--",
+            linewidth=1.8,
+            color="red",
+            alpha=0.8,
+        )
 
         ax.set_xlabel(r"Basal landslide area (m$^2$)")
         ax.set_ylabel("Factor of safety (FS)")
+        ax.tick_params(axis='y', labelleft=False)
         ax.set_xticks(basal_areas)
         ax.set_xticklabels([f"{area:.0f}" for area in basal_areas])
         ax.legend(loc="best", frameon=True)

@@ -16,20 +16,20 @@ class WorkflowConfig:
     # Project folder
     # -----------------------------
     # Put the scripts, input DEMs, shapefiles, and output folders inside this folder.
-    PROJECT_DIR: Path = Path(r"C:/Users/sdavilao/Documents/newcodesoil")
+    PROJECT_DIR: Path = Path(r"C:/Users/sdavilao/Documents/hollow-re")
 
     # -----------------------------
     # Extent and CRS settings
     # -----------------------------
-    basename: str = "ext26"
+    basename: str = "ext9"
     target_crs: str = "EPSG:32610"
     source_shp_epsg: int = 6557  # Only assigned when an input shapefile has no CRS
 
     # -----------------------------
     # Input file names / subfolders
     # -----------------------------
-    input_tiff: str = "ext26.tif"
-    points_shp: str = "ext26.shp"
+    input_tiff: str = "ext9.tif"
+    points_shp: str = "ext9_1.shp"
     lines_subdir: str = "polylines"
     dem_name: str = "dem_smooth_m_warp.tif"
     slope_name: str = "slope_smooth_m_warp.tif"
@@ -37,11 +37,11 @@ class WorkflowConfig:
     # -----------------------------
     # Output subfolders
     # -----------------------------
-    simulation_subdir: str = "simulation_results/new/new"
-    reproj_tif_subdir: str = "simulation_results/new/GeoTIFFs/reproj_tif"
-    reproj_shp_subdir: str = "reproj_shp"
-    results_subdir: str = "results/new/m"
-    intermediate_subdir: str = "results/new/intermediate"
+    simulation_subdir: str = "simulation_results"
+    reproj_tif_subdir: str = "simulation_results/reproj_tif"
+    reproj_shp_subdir: str = "simulation_results/reproj_shp"
+    results_subdir: str = "results/"
+    intermediate_subdir: str = "results/intermediate"
 
     # -----------------------------
     # Soil-transport parameters
@@ -69,10 +69,11 @@ class WorkflowConfig:
     rho_s: float = 1600.0
     g: float = 9.81
     phi_deg: float = 41.0
-    m_values: tuple = (0.85,)
-    cohesion_values: tuple = (760, 1920)
+    m_values: tuple = (0.85,1)
+    cohesion_values: tuple = (760, 1920, 3600, 6400)
     l: float = 10.0
     w: float = 6.7
+    r: float = 1.5
     j: float = 0.8
 
     # -----------------------------
