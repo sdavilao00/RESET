@@ -2,7 +2,7 @@
 
 This repository contains a two-stage workflow for modeling hollow soil depth evolution and estimating hollow failure recurrence intervals. The workflow was designed for characteristic hollow DEM snippets from the Oregon Coast Range, where smaller DEM subsets (`extX`) were clipped around representative convergent hollows to reduce computational cost while preserving local hillslope and hollow geometry.
 
-## Files
+## Main Files
 
 - `config.py`  
   Stores the project folder, extent name, CRS settings, model parameters, cohesion values, saturation values, and output folders. Edit this file first.
@@ -19,4 +19,4 @@ This repository contains a two-stage workflow for modeling hollow soil depth evo
 - `environment.yml`  
   Defines the conda environment needed to run the workflow.
 
-  Information regarding other figure deliverables can be found in the wiki page of this repository.
+  Information regarding necessary inputs and format can be found on the wiki page of this repository. In this wiki page, you can also find information on how to plot various outputs from this model. 
