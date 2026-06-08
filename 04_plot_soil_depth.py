@@ -34,7 +34,7 @@ def main():
     ri_df = clean_ri_dataframe(
         ri_df,
         min_slope=25.0,
-        drop_indices=[55, 57, 65],
+        #drop_indices=[55, 57, 65],
     )
 
     target_m = 1.0

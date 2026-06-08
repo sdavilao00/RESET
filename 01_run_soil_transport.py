@@ -16,7 +16,7 @@ For publication/reproducibility, this script should be run once per extent.
 
 import glob
 from pathlib import Path
-
+from tqdm import tqdm
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np

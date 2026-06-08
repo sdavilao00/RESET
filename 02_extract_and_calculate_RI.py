@@ -16,7 +16,7 @@ This script can be rerun many times without rerunning soil transport.
 
 import glob
 import re
-
+from tqdm import tqdm
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -183,6 +183,24 @@ def extract_soil_depth_by_buffer(cfg, make_preview=False):
                     "Slope_Pixel_Count": slope_count,
                     "Avg_Soil_Depth": avg_soil_depth,
                 })
+                
+    total_iterations = (
+    len(gdf)
+    * len(cfg.buffer_sizes)
+    * len(soil_depth_files)
+)
+
+    with tqdm(total=total_iterations, desc="Extracting soil depths") as pbar:
+    
+        for _, row in gdf.iterrows():
+            ...
+            for buffer_distance in cfg.buffer_sizes:
+                ...
+                for soil_depth_tif in soil_depth_files:
+    
+                    # existing extraction code
+    
+                    pbar.update(1)
 
     soil_df = pd.DataFrame(records)
     if not soil_df.empty:
@@ -191,13 +209,21 @@ def extract_soil_depth_by_buffer(cfg, make_preview=False):
     return soil_df
 
 
+
+    
 def calculate_fs_for_row(row, C0, m, cfg):
     """Calculate MD-STAB-style factor of safety for one row."""
     theta = np.radians(row["Avg_Slope"])
     z = row["Avg_Soil_Depth"]
+    buffer_size = row["Buffer_Size"]
 
     if np.isnan(z) or np.isnan(theta) or z <= 0:
         return np.nan
+
+    # Calculate failure geometry from buffer area and aspect ratio
+    area = np.pi * buffer_size**2
+    w = np.sqrt(area / cfg.aspect_ratio)
+    l = cfg.aspect_ratio * w
 
     yw = cfg.g * cfg.pw
     ys = cfg.g * cfg.rho_s
@@ -213,15 +239,15 @@ def calculate_fs_for_row(row, C0, m, cfg):
     Frb = (
         Crb
         + (np.cos(theta) ** 2) * z * (ys - yw * m) * np.tan(phi)
-    ) * cfg.l * cfg.w
+    ) * l * w
 
     Frc = (
         Crl
         + K0 * 0.5 * z * (ys - yw * m ** 2) * np.tan(phi)
-    ) * (np.cos(theta) * z * cfg.l * 2)
+    ) * (np.cos(theta) * z * l * 2)
 
-    Frddu = (Kp - Ka) * 0.5 * z ** 2 * (ys - yw * m ** 2) * cfg.w
-    Fdc = np.sin(theta) * np.cos(theta) * z * ys * cfg.l * cfg.w
+    Frddu = (Kp - Ka) * 0.5 * z ** 2 * (ys - yw * m ** 2) * w
+    Fdc = np.sin(theta) * np.cos(theta) * z * ys * l * w
 
     return (Frb + Frc + Frddu) / Fdc if Fdc != 0 else np.nan
 
@@ -371,7 +397,8 @@ if __name__ == "__main__":
     # RUN_EXTRACTION = False
     # RUN_FS_ANALYSIS = True
     # LOAD_EXISTING_EXTRACTION = True
-
+    # MAKE_PREVIEW = True
+    
     RUN_EXTRACTION = True
     RUN_FS_ANALYSIS = True
     LOAD_EXISTING_EXTRACTION = False

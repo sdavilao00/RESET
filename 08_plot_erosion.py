@@ -115,7 +115,7 @@ def main():
 
     plot_ero = plot_ero.dropna(subset=["Avg_Slope_deg", "Erosion_9"])
     plot_ero = plot_ero[plot_ero["Erosion_9"] > 0]
-    plot_ero = plot_ero.drop(index=[15, 23])
+    plot_ero = plot_ero.drop(index=[8,12,13,19,10,11])
 
     if SAVE_EROSION_TABLE:
         out_csv = cfg.results_dir / f"erosion_results_C{TARGET_COHESION}.csv"

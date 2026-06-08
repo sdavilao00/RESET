@@ -52,7 +52,7 @@ def setup_ri_axis(ax):
     ax.grid(False, which="minor", axis="x")
 
     ax.set_yscale("log")
-    ax.set_ylim(50, 1e4)
+    ax.set_ylim(50, 2e4)
     ax.set_yticks([100, 1000, 10000])
     ax.yaxis.set_major_formatter(LogFormatterMathtext())
 
@@ -86,6 +86,66 @@ def plot_inverse_fit(ax, x, y, color, linestyle="--"):
         linestyle=linestyle,
     )
 
+def fit_inverse_model_stats(x, y):
+    """Fit inverse model and return equation terms + R2 in normal y-space."""
+    popt, _ = curve_fit(
+        inverse_model_log,
+        x,
+        np.log10(y),
+        p0=[3.0, -25.0],
+        maxfev=10000,
+    )
+
+    loga_fit, b_fit = popt
+    a_fit = 10 ** loga_fit
+
+    y_pred = a_fit / (x + b_fit)
+
+    ss_res = np.sum((y - y_pred) ** 2)
+    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    r2 = 1 - (ss_res / ss_tot)
+
+    equation = f"RI = {a_fit:.3e} / (slope + {b_fit:.3f})"
+
+    return equation, a_fit, b_fit, r2
+
+def write_inverse_fit_report(ri_df, fig_dir):
+    """Write inverse model equations and R2 values to a text document."""
+
+    report_lines = []
+    report_lines.append("Inverse model curve fits")
+    report_lines.append("========================")
+    report_lines.append("Model form: RI = a / (slope + b)")
+    report_lines.append("")
+
+    group_cols = ["Cohesion", "m"]
+
+    for (cohesion, m_value), group in ri_df.groupby(group_cols):
+        if len(group) < 3:
+            continue
+
+        x = group["Avg_Slope_deg"].to_numpy()
+        y = group["Year"].to_numpy()
+
+        equation, a_fit, b_fit, r2 = fit_inverse_model_stats(x, y)
+
+        line = (
+            f"Cohesion = {int(cohesion)} Pa, m = {m_value:.2f}\n"
+            f"  {equation}\n"
+            f"  a = {a_fit:.6e}\n"
+            f"  b = {b_fit:.6f}\n"
+            f"  R2 = {r2:.3f}\n"
+        )
+
+        print(line)
+        report_lines.append(line)
+
+    out_path = fig_dir / "inverse_model_fit_equations_R2.txt"
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(report_lines))
+
+    print(f"Saved fit report: {out_path}")
 
 def plot_first_ri_figure(ri_df, fig_dir):
     """Plot m = 1 RI curves for all cohesion values."""
@@ -149,7 +209,7 @@ def plot_m_comparison_figure(ri_df, fig_dir):
     """Plot m = 1 fit lines and m = 0.85 points/fit lines for 760 and 1920 Pa."""
 
     plot_df = ri_df[
-        (ri_df["Cohesion"].isin([760, 1920])) &
+        (ri_df["Cohesion"].isin([760, 1920, 3600])) &
         (ri_df["m"].isin([1.0, 0.85]))
     ].copy()
 
@@ -270,11 +330,21 @@ def main():
     ri_df = clean_ri_dataframe(
         ri_df,
         min_slope=25.0,
-        drop_indices=[55, 57, 65],
+        drop_points=[
+            ("ext1", 4),
+            ("ext5", 2),
+            ("ext1", 3),
+            ("ext15", 6),
+            ("ext1", 2),
+            ("ext1", 1),
+            ("ext16", 1)
+        ],
     )
 
     ri_df.to_csv(fig_dir / "cleaned_RI_dataframe.csv", index=False)
 
+    write_inverse_fit_report(ri_df, fig_dir)
+    
     ri_df_m1 = plot_first_ri_figure(ri_df, fig_dir)
     ri_df_mcompare = plot_m_comparison_figure(ri_df, fig_dir)
 

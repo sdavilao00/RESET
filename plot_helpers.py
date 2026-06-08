@@ -52,7 +52,12 @@ def read_ri_results(results_dir, pattern="optimal_buffer_results_interpolated_*.
     return pd.concat(frames, ignore_index=True)
 
 
-def clean_ri_dataframe(df, min_slope=25.0, drop_indices=None):
+def clean_ri_dataframe(
+    df,
+    min_slope=25.0,
+    drop_indices=None,
+    drop_points=None,
+):
     """Apply common filtering used for manuscript RI plots."""
     out = df.copy()
 
@@ -62,8 +67,16 @@ def clean_ri_dataframe(df, min_slope=25.0, drop_indices=None):
     out = out[out["Avg_Slope_deg"] > min_slope]
     out = out[out["Year"] > 0]
 
-    if drop_indices is not None:
-        out = out.drop(drop_indices, errors="ignore")
+    if drop_points is not None:
+
+        for extent, point_id in drop_points:
+
+            out = out[
+                ~(
+                    (out["Extent"] == extent) &
+                    (out["Point_ID"] == point_id)
+                )
+            ]
 
     return out.reset_index(drop=True)
 
@@ -104,14 +117,14 @@ def add_critical_area_and_volume(df, cfg, saturation=1.0):
     A = (
         2 * Crl * z
         + K0 * (z ** 2) * (ys - yw * saturation ** 2) * np.tan(phi)
-    ) * np.cos(hollow_rad) * (cfg.r) ** 0.5
+    ) * np.cos(hollow_rad) * (cfg.aspect_ratio) ** 0.5
 
     B = (
         (Kp - Ka)
         * 0.5
         * (z ** 2)
         * (ys - yw * saturation ** 2)
-        * (cfg.r) ** (-0.5)
+        * (cfg.aspect_ratio) ** (-0.5)
     )
 
     C = (

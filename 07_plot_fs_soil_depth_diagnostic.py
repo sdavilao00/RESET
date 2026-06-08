@@ -24,8 +24,8 @@ from plot_helpers import get_figure_dir
 # =============================================================================
 # USER SETTINGS
 # =============================================================================
-TARGET_POINT_ID = 1
-DIAGNOSTIC_COHESION = 1920
+TARGET_POINT_ID = 3
+DIAGNOSTIC_COHESION = 6400
 DIAGNOSTIC_SATURATION = 1.0
 
 # Optional times for the basal-area diagnostic plot. If None, only the failure
@@ -65,6 +65,11 @@ def calculate_fs(df, cfg, cohesion, saturation):
 
     theta_v = theta[valid]
     z_v = z[valid]
+    
+    buffer_v = out.loc[valid, "Buffer_Size"].astype(float).to_numpy()
+    area_v = np.pi * buffer_v**2
+    w_v = np.sqrt(area_v / cfg.aspect_ratio)
+    l_v = cfg.aspect_ratio * w_v
 
     Crb = cohesion * np.exp(-z_v * cfg.j)
     Crl = (cohesion / (cfg.j * z_v)) * (1.0 - np.exp(-z_v * cfg.j))
@@ -73,22 +78,22 @@ def calculate_fs(df, cfg, cohesion, saturation):
     Frb = (
         Crb
         + (np.cos(theta_v) ** 2) * z_v * (ys - yw * saturation) * np.tan(phi)
-    ) * cfg.l * cfg.w
+    ) * l_v * w_v
 
     Frc = (
         Crl
         + K0 * 0.5 * z_v * (ys - yw * saturation ** 2) * np.tan(phi)
-    ) * (np.cos(theta_v) * z_v * cfg.l * 2.0)
+    ) * (np.cos(theta_v) * z_v * l_v * 2.0)
 
     Frddu = (
         (Kp - Ka)
         * 0.5
         * (z_v ** 2)
         * (ys - yw * saturation ** 2)
-        * cfg.w
+        * w_v
     )
 
-    Fdc = np.sin(theta_v) * np.cos(theta_v) * z_v * ys * cfg.l * cfg.w
+    Fdc = np.sin(theta_v) * np.cos(theta_v) * z_v * ys * l_v * w_v
     fs[valid] = np.where(Fdc != 0, (Frb + Frc + Frddu) / Fdc, np.nan)
 
     out["FS"] = fs
@@ -281,7 +286,7 @@ def main():
         
         ax2.set_ylabel("Average Soil Depth (m)", color="black")
         ax2.tick_params(axis="y", labelcolor="black")
-        ax2.set_ylim(0, 0.8)
+        ax2.set_ylim(0, 1.5)
         
         fig.tight_layout()
         savefig(
