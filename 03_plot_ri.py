@@ -209,7 +209,7 @@ def plot_m_comparison_figure(ri_df, fig_dir):
     """Plot m = 1 fit lines and m = 0.85 points/fit lines for 760 and 1920 Pa."""
 
     plot_df = ri_df[
-        (ri_df["Cohesion"].isin([760, 1920, 3600])) &
+        (ri_df["Cohesion"].isin([760, 1920, 3600, 6400])) &
         (ri_df["m"].isin([1.0, 0.85]))
     ].copy()
 
@@ -332,9 +332,7 @@ def main():
         min_slope=25.0,
         drop_points=[
             ("ext1", 4),
-            ("ext5", 2),
             ("ext1", 3),
-            ("ext15", 6),
             ("ext1", 2),
             ("ext1", 1),
             ("ext16", 1)

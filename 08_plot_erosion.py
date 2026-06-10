@@ -28,12 +28,11 @@ from plot_helpers import (
 # =============================================================================
 # USER SETTINGS
 # =============================================================================
-TARGET_COHESION = 1920
+TARGET_COHESION = 3600
 SATURATION_FOR_VOLUME = 1.0
-MIN_SLOPE_DEG = 25.0
-# DROP_INDICES = [38, 40, 44]
+MIN_SLOPE_DEG = 20.0
 
-ZONAL_9_CSV = "zonal_9.csv"
+ZONAL_9_CSV = "zonal_9_1.csv"
 
 
 SAVE_FIGURE = True
@@ -51,9 +50,21 @@ plt.rcParams.update({
 })
 
 
-def exp_model(x, a, b):
-    """Exponential erosion-slope model."""
-    return a * np.exp(b * x)
+def nonlinear_transport(x, a, s_c):
+    """Roering et al. (1999) nonlinear hillslope transport model.
+
+    E = a / (1 - (S / S_c)^2)
+
+    Parameters
+    ----------
+    x : array-like
+        Slope in degrees.
+    a : float
+        Low-slope erosion rate coefficient.
+    s_c : float
+        Critical slope (degrees) at which flux diverges.
+    """
+    return a / (1 - (x / s_c) ** 2)
 
 
 def r_squared(y_true, y_pred):
@@ -79,7 +90,19 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=MIN_SLOPE_DEG)
+
+    
+    ri_df = clean_ri_dataframe(
+        ri_df,
+        min_slope=20.0,
+        drop_points=[
+            ("ext1", 4),
+            ("ext1", 3),
+            ("ext1", 2),
+            ("ext1", 1),
+            ("ext16", 1)
+        ],
+    )
 
     ri_df = ri_df[ri_df["Cohesion"] == TARGET_COHESION].copy()
     ri_df = ri_df[ri_df["m"] == 1.0].copy()
@@ -115,8 +138,9 @@ def main():
 
     plot_ero = plot_ero.dropna(subset=["Avg_Slope_deg", "Erosion_9"])
     plot_ero = plot_ero[plot_ero["Erosion_9"] > 0]
-    plot_ero = plot_ero.drop(index=[8,12,13,19,10,11])
-
+    plot_ero = plot_ero.drop([21])
+    # plot_ero = plot_ero.drop([12, 20])
+    
     if SAVE_EROSION_TABLE:
         out_csv = cfg.results_dir / f"erosion_results_C{TARGET_COHESION}.csv"
         merged_ero.to_csv(out_csv, index=False)
@@ -125,14 +149,21 @@ def main():
     x = plot_ero["Avg_Slope_deg"].to_numpy()
     y = plot_ero["Erosion_9"].to_numpy()
 
-    params, _ = curve_fit(exp_model, x, y, p0=[0.01, 0.05], maxfev=10000)
-    r2 = r_squared(y, exp_model(x, *params))
+    params, _ = curve_fit(
+        nonlinear_transport,
+        x,
+        y,
+        p0=[0.01, 60.0],
+        bounds=([0, x.max() + 0.01], [np.inf, 200]),
+        maxfev=20000,
+    )
+    r2 = r_squared(y, nonlinear_transport(x, *params))
 
-    slope_range = np.linspace(x.min(), x.max(), 500)
+    slope_range = np.linspace(x.min(), 45.0, 500)
 
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.set_facecolor("#f0f0f0")
-    ax.set_ylim(1e-2, 6e-1)
+    ax.set_ylim(1e-2, 5e-1)
 
     ax.scatter(
         x,
@@ -147,7 +178,7 @@ def main():
 
     ax.plot(
         slope_range,
-        exp_model(slope_range, *params),
+        nonlinear_transport(slope_range, *params),
         c="red",
         linestyle="--",
         linewidth=2.2,
@@ -155,7 +186,7 @@ def main():
     )
 
     ax.set_xlabel(r"Hollow slope, $\theta_H$ (°)", fontweight="bold")
-    ax.set_ylabel(r"Erosion rate, $E$ (m yr$^{-1}$)", fontweight="bold")
+    ax.set_ylabel(r"Erosion rate, $E$ (mm yr$^{-1}$)", fontweight="bold")
 
     xticks = np.arange(
         np.floor(plot_ero["Avg_Slope_deg"].min() / 3) * 3,
@@ -165,7 +196,12 @@ def main():
     ax.set_xticks(xticks)
     ax.grid(True, which="both", linestyle="--", alpha=0.40)
 
-    eq_label = fr"$E = {params[0]:.5f}e^{{{params[1]:.4f}\theta_H}}$"
+    ax.set_xlim(right=45.0)
+
+    eq_label = (
+        fr"$E = {params[0]:.5f}\,/\,"
+        fr"(1 - (\theta_H / {params[1]:.1f})^2)$"
+    )
     r2_label = fr"$R^2 = {r2:.3f}$"
 
     legend_handles = [

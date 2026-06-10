@@ -32,7 +32,17 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[55, 57, 65])
+    ri_df = clean_ri_dataframe(
+        ri_df,
+        min_slope=25.0,
+        drop_points=[
+            ("ext1", 4),
+            ("ext1", 3),
+            ("ext1", 2),
+            ("ext1", 1),
+            ("ext16", 1)
+        ],
+    )
     
     target_m = 1.0
     ri_df = ri_df[ri_df["m"] == target_m].copy()
@@ -55,7 +65,7 @@ def main():
     cmap = plt.cm.viridis
     colors = cmap(np.linspace(0, 1, len(groups)))
     color_map = {coh: color for color, (coh, _) in zip(colors, groups)}
-    size_scale = 2.5
+    size_scale = 2
 
     for cohesion, group in groups:
         ax.scatter(

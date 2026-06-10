@@ -54,8 +54,8 @@ class WorkflowConfig:
     P0: float = 0.0003
     h0: float = 0.5
     dt: int = 50
-    target_time: int = 500000
-    output_interval: int = 100000
+    target_time: int = 5000
+    output_interval: int = 100
 
     # -----------------------------
     # Candidate landslide-buffer sizes

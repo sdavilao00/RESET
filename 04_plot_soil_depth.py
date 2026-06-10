@@ -17,12 +17,12 @@ from plot_helpers import add_critical_area_and_volume, clean_ri_dataframe, get_f
 
 plt.rcParams.update({
     "font.size": 16,
-    "axes.titlesize": 11,
-    "axes.labelsize": 11,
-    "xtick.labelsize": 11,
-    "ytick.labelsize": 11,
-    "legend.fontsize": 10,
-    "legend.title_fontsize": 11,
+    "axes.titlesize": 16,
+    "axes.labelsize": 16,
+    "xtick.labelsize": 16,
+    "ytick.labelsize": 16,
+    "legend.fontsize": 12,
+    "legend.title_fontsize": 12,
 })
 
 def main():
@@ -34,7 +34,13 @@ def main():
     ri_df = clean_ri_dataframe(
         ri_df,
         min_slope=25.0,
-        #drop_indices=[55, 57, 65],
+        drop_points=[
+            ("ext1", 4),
+            ("ext1", 3),
+            ("ext1", 2),
+            ("ext1", 1),
+            ("ext16", 1)
+        ],
     )
 
     target_m = 1.0
@@ -59,7 +65,7 @@ def main():
         reverse=True,
     )
 
-    fig, ax = plt.subplots(figsize=(12, 3.5))
+    fig, ax = plt.subplots(figsize=(10, 6))
     ax.grid(True, alpha=0.4)
 
     for i, (cohesion, group) in enumerate(grouped):
@@ -84,12 +90,12 @@ def main():
     )
     cbar.set_label(
         r"Critical area ($m^2$)",
-        fontsize=10,
+        fontsize=16,
         fontweight="bold",
     )
 
     ax.set_xlabel(r"Hollow slope, $\theta_H$ (°)", fontweight="bold")
-    ax.set_ylabel("Critical soil depth,\n$z_c$ (m)", fontweight="bold")
+    ax.set_ylabel("Critical soil depth, $z_c$ (m)", fontweight="bold")
 
     legend_handles = [
         Line2D(
@@ -107,7 +113,7 @@ def main():
     ax.legend(
         handles=legend_handles,
         title="Cohesion",
-        loc="upper left",
+        loc="upper right",
         frameon=True,
     )
 
