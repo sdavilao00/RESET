@@ -19,4 +19,6 @@ This repository contains a two-stage workflow for modeling hollow soil depth evo
 - `environment.yml`  
   Defines the conda environment needed to run the workflow.
 
-  Information regarding necessary inputs and format can be found on the wiki page of this repository. In this wiki page, you can also find information on how to plot various outputs from this model. 
+  Information regarding necessary inputs and format can be found on the wiki page of this repository. In this wiki page, you can also find information on how to plot various outputs from this model.
+
+  Example data and additional data can be found in example_data
