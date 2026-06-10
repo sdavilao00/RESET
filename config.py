@@ -21,15 +21,15 @@ class WorkflowConfig:
     # -----------------------------
     # Extent and CRS settings
     # -----------------------------
-    basename: str = "ext9"
+    basename: str = "ext15"
     target_crs: str = "EPSG:32610"
     source_shp_epsg: int = 6557  # Only assigned when an input shapefile has no CRS
 
     # -----------------------------
     # Input file names / subfolders
     # -----------------------------
-    input_tiff: str = "ext9.tif"
-    points_shp: str = "ext9_1.shp"
+    input_tiff: str = "ext15.tif"
+    points_shp: str = "ext15_1.shp"
     lines_subdir: str = "polylines"
     dem_name: str = "dem_smooth_m_warp.tif"
     slope_name: str = "slope_smooth_m_warp.tif"
@@ -40,7 +40,7 @@ class WorkflowConfig:
     simulation_subdir: str = "simulation_results"
     reproj_tif_subdir: str = "simulation_results/reproj_tif"
     reproj_shp_subdir: str = "simulation_results/reproj_shp"
-    results_subdir: str = "results/"
+    results_subdir: str = "results/test"
     intermediate_subdir: str = "results/intermediate"
 
     # -----------------------------
@@ -55,7 +55,7 @@ class WorkflowConfig:
     h0: float = 0.5
     dt: int = 50
     target_time: int = 5000
-    output_interval: int = 50
+    output_interval: int = 100
 
     # -----------------------------
     # Candidate landslide-buffer sizes
@@ -69,11 +69,11 @@ class WorkflowConfig:
     rho_s: float = 1600.0
     g: float = 9.81
     phi_deg: float = 41.0
-    m_values: tuple = (0.85,1)
+    m_values: tuple = (0.85, 1)
     cohesion_values: tuple = (760, 1920, 3600, 6400)
-    l: float = 10.0
-    w: float = 6.7
-    r: float = 1.5
+
+    # Failure geometry
+    aspect_ratio: float = 1.5  # l / w
     j: float = 0.8
 
     # -----------------------------
@@ -140,6 +140,21 @@ class WorkflowConfig:
     def buffer_soil_depth_csv(self):
         return self.intermediate_dir / f"{self.basename}_buffer_soil_depths.csv"
 
+    @property
+    def failure_areas(self):
+        import numpy as np
+        buffer_sizes = np.array(self.buffer_sizes)
+        return np.pi * buffer_sizes**2
+
+    @property
+    def failure_widths(self):
+        import numpy as np
+        return np.sqrt(self.failure_areas / self.aspect_ratio)
+
+    @property
+    def failure_lengths(self):
+        return self.aspect_ratio * self.failure_widths
+    
     def make_dirs(self):
         for folder in [
             self.simulation_out_dir,

@@ -32,7 +32,17 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[55, 57, 65])
+    ri_df = clean_ri_dataframe(
+        ri_df,
+        min_slope=25.0,
+        drop_points=[
+            ("ext1", 4),
+            ("ext1", 3),
+            ("ext1", 2),
+            ("ext1", 1),
+            ("ext16", 1)
+        ],
+    )
     
     target_m = 1.0
     ri_df = ri_df[ri_df["m"] == target_m].copy()
@@ -55,7 +65,7 @@ def main():
     cmap = plt.cm.viridis
     colors = cmap(np.linspace(0, 1, len(groups)))
     color_map = {coh: color for color, (coh, _) in zip(colors, groups)}
-    size_scale = 10
+    size_scale = 2
 
     for cohesion, group in groups:
         ax.scatter(
@@ -80,7 +90,7 @@ def main():
     ax.set_xticks(xticks)
 
     ax.set_yscale("log")
-    ax.set_ylim(50, 1e4)
+    ax.set_ylim(50, 2e4)
     ax.set_yticks([100, 1000, 10000])
     ax.yaxis.set_major_formatter(LogFormatterMathtext())
 
@@ -166,6 +176,43 @@ def main():
     plt.show()
 
     print(f"Saved: {out_path}")
+    
+    # ------------------------------------------------------------------
+    # Area vs Volume
+    # ------------------------------------------------------------------
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+    
+    for cohesion, group in groups:
+        ax2.scatter(
+            group["Ac"],
+            group["Volume"],
+            color=color_map[cohesion],
+            edgecolors="k",
+            alpha=0.8,
+            label=f"{int(cohesion)} Pa",
+        )
+    
+    ax2.set_xlabel(r"Critical failure area (m$^2$)", fontweight="bold")
+    ax2.set_ylabel(r"Failure volume (m$^3$)", fontweight="bold")
+    
+    ax2.grid(True, which="major", color="#d0d0d0", alpha=0.7)
+    ax2.grid(True, which="minor", color="#d0d0d0", alpha=0.3)
+    ax2.minorticks_on()
+    
+    ax2.legend(
+        title="Cohesion (Pa)",
+        loc="upper left",
+        frameon=True,
+    )
+    
+    fig2.tight_layout()
+    
+    out_path2 = fig_dir / "area_vs_volume.png"
+    fig2.savefig(out_path2, dpi=450, bbox_inches="tight")
+    
+    plt.show()
+    
+    print(f"Saved: {out_path2}")
 
 
 if __name__ == "__main__":

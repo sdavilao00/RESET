@@ -30,11 +30,29 @@ def main():
     fig_dir = get_figure_dir(cfg)
 
     ri_df = read_ri_results(cfg.results_dir)
-    ri_df = clean_ri_dataframe(ri_df, min_slope=25.0, drop_indices=[55, 57, 65])
+    ri_df = clean_ri_dataframe(
+        ri_df,
+        min_slope=25.0,
+        drop_points=[
+            ("ext1", 4),
+            ("ext1", 3),
+            ("ext1", 2),
+            ("ext1", 1),
+            ("ext16", 1)
+        ],
+    )
+    
+
+    # Keep only fully saturated runs
+    ri_df = ri_df[ri_df["m"] == 1.0].copy()
+    
     ri_df["RI_norm"] = ri_df["Year"] / ri_df["Cohesion"]
+    
+    
 
     x = ri_df["Avg_Slope_deg"].to_numpy()
     y = ri_df["RI_norm"].to_numpy()
+    
 
     popt, _ = curve_fit(
         inverse_model_log,

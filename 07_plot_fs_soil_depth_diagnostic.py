@@ -24,13 +24,13 @@ from plot_helpers import get_figure_dir
 # =============================================================================
 # USER SETTINGS
 # =============================================================================
-TARGET_POINT_ID = 1
+TARGET_POINT_ID = 7
 DIAGNOSTIC_COHESION = 1920
 DIAGNOSTIC_SATURATION = 1.0
 
 # Optional times for the basal-area diagnostic plot. If None, only the failure
 # year is used. Change these to values that are meaningful for the selected hollow.
-TIMES_TO_PLOT = [950, 1000]  # Example: [1090, 1100]
+TIMES_TO_PLOT = [690, 700]  # Example: [1090, 1100]
 
 SAVE_FIGURES = True
 
@@ -65,6 +65,11 @@ def calculate_fs(df, cfg, cohesion, saturation):
 
     theta_v = theta[valid]
     z_v = z[valid]
+    
+    buffer_v = out.loc[valid, "Buffer_Size"].astype(float).to_numpy()
+    area_v = np.pi * buffer_v**2
+    w_v = np.sqrt(area_v / cfg.aspect_ratio)
+    l_v = cfg.aspect_ratio * w_v
 
     Crb = cohesion * np.exp(-z_v * cfg.j)
     Crl = (cohesion / (cfg.j * z_v)) * (1.0 - np.exp(-z_v * cfg.j))
@@ -73,22 +78,22 @@ def calculate_fs(df, cfg, cohesion, saturation):
     Frb = (
         Crb
         + (np.cos(theta_v) ** 2) * z_v * (ys - yw * saturation) * np.tan(phi)
-    ) * cfg.l * cfg.w
+    ) * l_v * w_v
 
     Frc = (
         Crl
         + K0 * 0.5 * z_v * (ys - yw * saturation ** 2) * np.tan(phi)
-    ) * (np.cos(theta_v) * z_v * cfg.l * 2.0)
+    ) * (np.cos(theta_v) * z_v * l_v * 2.0)
 
     Frddu = (
         (Kp - Ka)
         * 0.5
         * (z_v ** 2)
         * (ys - yw * saturation ** 2)
-        * cfg.w
+        * w_v
     )
 
-    Fdc = np.sin(theta_v) * np.cos(theta_v) * z_v * ys * cfg.l * cfg.w
+    Fdc = np.sin(theta_v) * np.cos(theta_v) * z_v * ys * l_v * w_v
     fs[valid] = np.where(Fdc != 0, (Frb + Frc + Frddu) / Fdc, np.nan)
 
     out["FS"] = fs
@@ -233,7 +238,7 @@ def main():
         ax1.set_xlim(0, plot_df["Year"].max() * 1.05)
     
     # Override to fixed x-limit, like your version
-    ax1.set_xlim(0, 1200)
+    ax1.set_xlim(0, 1000)
     
     ax1.grid(True, which="both", color="#d0d0d0", alpha=0.7)
     ax1.set_axisbelow(True)
@@ -281,7 +286,7 @@ def main():
         
         ax2.set_ylabel("Average Soil Depth (m)", color="black")
         ax2.tick_params(axis="y", labelcolor="black")
-        ax2.set_ylim(0, 0.8)
+        ax2.set_ylim(0, 0.65)
         
         fig.tight_layout()
         savefig(
