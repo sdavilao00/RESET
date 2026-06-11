@@ -1,4 +1,5 @@
 <img width="1961" height="802" alt="reset_0611" src="https://github.com/user-attachments/assets/69f2feaf-7b81-4da8-899f-2b72ab44932f" />
+
 # **RESET**: REcurring Soil Evacuation in Topographic Hollows
 
 This repository contains a two-stage workflow for modeling hollow soil depth evolution and estimating hollow failure recurrence intervals. The workflow was designed for characteristic hollow DEM snippets from the Oregon Coast Range, where smaller DEM subsets (`extX`) were clipped around representative convergent hollows to reduce computational cost while preserving local hillslope and hollow geometry.
