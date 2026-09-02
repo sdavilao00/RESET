@@ -228,7 +228,7 @@ def run_soil_transport_simulation(cfg):
         erosion_exceeds = (np.abs(elevation_change) > initial_soil_depth) & nonzero_soil_mask
 
         if np.any(erosion_exceeds):
-            z_new[erosion_exceeds] = z_old[erosion_exceeds] - total_soil_depth[erosion_exceeds]
+            z_new[erosion_exceeds] = z_old[erosion_exceeds] - total_soil_depth[erosion_exceeds] / FT_TO_M_US
             total_soil_depth[erosion_exceeds] = production_rate[erosion_exceeds]
 
         change_in_soil_depth = production_rate.copy()
