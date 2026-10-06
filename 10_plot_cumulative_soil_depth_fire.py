@@ -22,7 +22,7 @@ TARGET_POINT_ID = 1
 ID_FIELD = 'id'
 SAVE_FIGURE = True
 # Set None to show the entire simulation, or choose a zoom such as (40, 65).
-X_LIMITS = (0, 2500)
+X_LIMITS = (0, 500)
 FIRST_FIRE = 50.0
 FIRE_INTERVAL = 100.0
 FIRE_DURATION = 3.0
@@ -125,6 +125,8 @@ def plot_cumulative_soil_depth(times, cumulative_production,
     if limits[1] <= limits[0]:
         raise ValueError('X_LIMITS must have increasing bounds.')
     ax.set_xlim(*limits)
+    ax.set_xlim(*limits)
+    ax.set_ylim(0, 0.6)  # Minimum and maximum thickness in meters
     first_visible = max(0, int(np.floor((limits[0] - FIRST_FIRE) / FIRE_INTERVAL)))
     label_added = False
     for start in np.arange(FIRST_FIRE + first_visible * FIRE_INTERVAL,
